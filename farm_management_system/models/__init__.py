@@ -1,3 +1,3 @@
-from .goat import Goat
-from .health import Health
-from .user import User
+from .goats import Goat
+from .healths import Health
+from .users import User

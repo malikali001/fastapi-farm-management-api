@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, Column, Enum, Integer, String
 from sqlalchemy.orm import Session
 
 from ..database import Base
-from ..schema import users_schema
+from ..schemas import users
 
 
 class UserType(enum.Enum):
@@ -20,28 +20,29 @@ class User(Base):
     first_name = Column(String)
     last_name = Column(String)
     is_active = Column(Boolean, default=True)
-    is_superuser = Column(Boolean, default=False)
     user_type = Column(Enum(UserType), server_default="manager")
+    hashed_password = Column(String)
 
     @classmethod
-    def get_user(cls, db: Session, user_id: int):
+    def get_by_id(cls, db: Session, user_id: int):
         return db.query(cls).filter(cls.id == user_id).first()
 
     @classmethod
-    def get_user_by_email(cls, db: Session, email: str):
+    def get_by_email(cls, db: Session, email: str):
         return db.query(cls).filter(cls.email == email).first()
 
     @classmethod
-    def get_users(cls, db: Session, skip: int = 0, limit: int = 10):
+    def get(cls, db: Session, skip: int = 0, limit: int = 10):
         return db.query(cls).offset(skip).limit(limit).all()
 
     @classmethod
-    def create_user(cls, db: Session, user: users_schema.UserCreate):
+    def create(cls, db: Session, user: users.UserCreate):
         db_user = cls(
             email=user.email,
             first_name=user.first_name,
             last_name=user.last_name,
             user_type=user.user_type,
+            hashed_password=user.password
         )
         db.add(db_user)
         db.commit()
@@ -49,7 +50,7 @@ class User(Base):
         return db_user
 
     @classmethod
-    def update_user(cls, db: Session, user_id: int, user: users_schema.UserUpdate):
+    def update(cls, db: Session, user_id: int, user: users.UserCreate):
         db_user = db.query(cls).filter(cls.id == user_id).first()
         if db_user is None:
             return None
@@ -61,7 +62,7 @@ class User(Base):
         return db_user
 
     @classmethod
-    def delete_user(cls, db: Session, user_id: int):
+    def delete(cls, db: Session, user_id: int):
         db_user = db.query(cls).filter(cls.id == user_id).first()
         if db_user is None:
             return None

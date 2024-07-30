@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserType(str, Enum):
@@ -11,27 +11,21 @@ class UserType(str, Enum):
 
 class UserBase(BaseModel):
     email: EmailStr
-    first_name: str
-    last_name: str
+    first_name: str = Field(..., max_length=30)
+    last_name: str = Field(..., max_length=30)
     user_type: UserType
 
 
 class UserCreate(UserBase):
-    pass
-
-
-class UserUpdate(UserBase):
-    is_active: Optional[bool] = True
-    is_superuser: Optional[bool] = False
+    password: str
 
 
 class UserInDBBase(UserBase):
     id: int
     is_active: bool
-    is_superuser: bool
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class User(UserInDBBase):
@@ -40,3 +34,12 @@ class User(UserInDBBase):
 
 class UserInDB(UserInDBBase):
     hashed_password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
