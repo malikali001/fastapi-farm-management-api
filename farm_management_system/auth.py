@@ -51,6 +51,9 @@ async def get_current_user(db: Session = Depends(dependencies.get_db), token: st
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if models.BlacklistedToken.is_blacklisted(db, token):
+        raise credentials_exception
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -65,7 +68,14 @@ async def get_current_user(db: Session = Depends(dependencies.get_db), token: st
     return user
 
 
+
 async def get_current_active_user(current_user: models.User = Depends(get_current_user)):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+def blacklist_token(db: Session, token: str):
+    blacklisted_token = models.BlacklistedToken(token=token)
+    db.add(blacklisted_token)
+    db.commit()
