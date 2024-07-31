@@ -25,7 +25,7 @@ class HealthInDBBase(HealthBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Health(HealthInDBBase):

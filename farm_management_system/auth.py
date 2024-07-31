@@ -10,8 +10,7 @@ from . import dependencies, models, schemas
 
 SECRET_KEY = "123456789"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -45,7 +44,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     return encoded_jwt
 
 
-async def get_current_user(db: Session = Depends(dependencies.get_db), token: str = Depends(oauth2_scheme)):
+async def get_current_user(
+    db: Session = Depends(dependencies.get_db), token: str = Depends(oauth2_scheme)
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -68,8 +69,9 @@ async def get_current_user(db: Session = Depends(dependencies.get_db), token: st
     return user
 
 
-
-async def get_current_active_user(current_user: models.User = Depends(get_current_user)):
+async def get_current_active_user(
+    current_user: models.User = Depends(get_current_user),
+):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
