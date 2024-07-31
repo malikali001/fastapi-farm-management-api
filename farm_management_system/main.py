@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from . import auth, dependencies, schemas
 from .database import Base, engine
-from .routers import users
+from .routers import goats, users, healths
 
 Base.metadata.create_all(bind=engine)
 
@@ -12,6 +12,8 @@ app = FastAPI()
 
 
 app.include_router(users.router)
+app.include_router(goats.router)
+app.include_router(healths.router)
 
 
 @app.post("/token", response_model=schemas.users.Token)
