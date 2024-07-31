@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import auth, dependencies, models, schemas
+from .. import auth, dependencies, models, permissions, schemas
 
 router = APIRouter()
 
 
 @router.post("/", response_model=schemas.users.User)
 def create_user(
-    user: schemas.users.UserCreate, db: Session = Depends(dependencies.get_db)
+    user: schemas.users.UserCreate,
+    db: Session = Depends(dependencies.get_db),
+    current_user: models.User = Depends(permissions.is_admin),
 ):
     db_user = models.User.get_by_email(db, email=user.email)
     if db_user:
@@ -25,7 +27,11 @@ async def read_users_me(
 
 
 @router.get("/{user_id}", response_model=schemas.users.User)
-def read_user(user_id: int, db: Session = Depends(dependencies.get_db)):
+def read_user(
+    user_id: int,
+    db: Session = Depends(dependencies.get_db),
+    current_user: models.User = Depends(permissions.is_admin),
+):
     db_user = models.User.get_by_id(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -37,6 +43,7 @@ def update_user(
     user_id: int,
     user: schemas.users.UserCreate,
     db: Session = Depends(dependencies.get_db),
+    current_user: models.User = Depends(permissions.is_admin),
 ):
     db_user = models.User.get_by_id(db, user_id=user_id)
     if db_user is None:
@@ -45,7 +52,11 @@ def update_user(
 
 
 @router.delete("/{user_id}", response_model=schemas.users.User)
-def delete_user(user_id: int, db: Session = Depends(dependencies.get_db)):
+def delete_user(
+    user_id: int,
+    db: Session = Depends(dependencies.get_db),
+    current_user: models.User = Depends(permissions.is_admin),
+):
     db_user = models.User.get_by_id(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -54,7 +65,10 @@ def delete_user(user_id: int, db: Session = Depends(dependencies.get_db)):
 
 @router.get("/", response_model=list[schemas.users.User])
 def read_users(
-    skip: int = 0, limit: int = 10, db: Session = Depends(dependencies.get_db)
+    skip: int = 0,
+    limit: int = 10,
+    db: Session = Depends(dependencies.get_db),
+    current_user: models.User = Depends(permissions.is_admin),
 ):
     users = models.User.get(db, skip=skip, limit=limit)
     return users
